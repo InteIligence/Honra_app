@@ -575,16 +575,24 @@ export default function PerfilPublico() {
 
             {acaoMsg && <Text style={styles.acaoInfo}>{acaoMsg}</Text>}
 
-            {/* Ações de segurança — discretas, no fim. */}
+            {/* Ações de segurança — discretas, no fim. DISCRETAS, NÃO
+                INALCANÇÁVEIS: mediam 70×17px, e quem precisa de bloquear
+                alguém costuma estar a tentar fazê-lo depressa e mal. Continuam
+                sem cor de alarme e no fim da página (não são o que se vem cá
+                fazer), mas o alvo passou a ter altura de dedo. */}
             {!ehProprio && (
               <View style={styles.seguranca}>
-                <Text style={styles.acaoLink} onPress={() => setDenunciaAberta(true)}>
-                  {t('pperfil.denunciar')}
-                </Text>
+                <Pressable
+                  onPress={() => setDenunciaAberta(true)}
+                  style={styles.segAlvo}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.acaoLink}>{t('pperfil.denunciar')}</Text>
+                </Pressable>
                 {!bloqueado && (
-                  <Text style={styles.acaoLink} onPress={bloquear}>
-                    {t('pperfil.bloquear')}
-                  </Text>
+                  <Pressable onPress={bloquear} style={styles.segAlvo} accessibilityRole="button">
+                    <Text style={styles.acaoLink}>{t('pperfil.bloquear')}</Text>
+                  </Pressable>
                 )}
               </View>
             )}
@@ -695,6 +703,7 @@ const styles = StyleSheet.create({
 
   // Trust & Safety — ações discretas + feedback + modal.
   acaoLink: { color: Honra.verde, fontSize: 14, fontWeight: '700', marginTop: Espaco.xs },
+  segAlvo: { minHeight: 44, justifyContent: 'center', paddingHorizontal: Espaco.xs },
   acaoInfo: { color: Honra.tintaSuave, fontSize: 13, lineHeight: 19 },
   seguranca: {
     flexDirection: 'row',

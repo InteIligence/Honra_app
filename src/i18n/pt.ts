@@ -881,6 +881,7 @@ export const pt = {
   'pesq.ver_perfil_de': 'Ver o perfil de {nome}',
   'pesq.pedir_curto': 'Pedir orçamento',
   'pesq.lista_curto': 'Guardar',
+  'pesq.lista_com_marcada': 'Entra já a pessoa que marcaste. Ninguém é avisado.',
   'idverif.avaliar': 'Para avaliar, verifica primeiro a tua identidade.',
   'idverif.escolher': 'Para abrir um orçamento a um candidato, verifica primeiro a tua identidade.',
   'idverif.sub': 'A honra começa na identidade real.',
@@ -1269,6 +1270,7 @@ export const pt = {
   'cats.n_areas': '{n} subcategorias',
   'cats.explorar': 'Explorar por área',
   'cats.fechar_areas': 'Fechar',
+  'cats.uma_area': '1 subcategoria',
   'eperfil.sem_categorias': 'Ainda não há categorias disponíveis.',
   'eperfil.erro_categorias':
     'Perfil guardado, mas não foi possível atualizar as categorias. Tenta de novo.',

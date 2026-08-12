@@ -105,6 +105,9 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         // Barra de telemóvel (a secretária usa o RailSecretaria): só símbolos.
+        // Sem rótulo por baixo do ícone — mas SEM RÓTULO NÃO É SEM NOME. Cada
+        // separador leva `tabBarAccessibilityLabel`: um leitor de ecrã anunciava
+        // cinco botões mudos, e o ícone da mala não diz "Orçamentos" a ninguém.
         tabBarShowLabel: false,
         tabBarActiveTintColor: Honra.verde,
         tabBarInactiveTintColor: Honra.tintaSuave,
@@ -122,6 +125,7 @@ export default function TabsLayout() {
         name="inicio"
         options={{
           title: t('tabs.inicio'),
+          tabBarAccessibilityLabel: t('tabs.inicio'),
           tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
         }}
       />
@@ -129,6 +133,7 @@ export default function TabsLayout() {
         name="pesquisar"
         options={{
           title: t('tabs.pesquisar'),
+          tabBarAccessibilityLabel: t('tabs.pesquisar'),
           tabBarIcon: ({ color, size }) => <Feather name="search" size={size} color={color} />,
           // Sem coluna de leitura: a Pesquisa tem grelha própria de largura total.
         }}
@@ -137,6 +142,7 @@ export default function TabsLayout() {
         name="orcamentos"
         options={{
           title: t('tabs.orcamentos'),
+          tabBarAccessibilityLabel: t('tabs.orcamentos'),
           tabBarBadge: pendentes > 0 ? (pendentes > 99 ? '99+' : pendentes) : undefined,
           tabBarBadgeStyle: { backgroundColor: Honra.verde, color: Honra.creme, fontSize: 11 },
           tabBarIcon: ({ color, size }) => <Feather name="briefcase" size={size} color={color} />,
@@ -147,6 +153,7 @@ export default function TabsLayout() {
         name="chat"
         options={{
           title: t('tabs.chat'),
+          tabBarAccessibilityLabel: t('tabs.chat'),
           // Número de mensagens por ler (só aparece quando há).
           tabBarBadge: naoLidas > 0 ? (naoLidas > 99 ? '99+' : naoLidas) : undefined,
           tabBarBadgeStyle: { backgroundColor: Honra.verde, color: Honra.creme, fontSize: 11 },
@@ -170,6 +177,7 @@ export default function TabsLayout() {
         name="perfil"
         options={{
           title: t('tabs.perfil'),
+          tabBarAccessibilityLabel: t('tabs.perfil'),
           tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
           // Sem coluna de leitura: o Perfil tem painel próprio de largura total.
         }}

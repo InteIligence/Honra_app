@@ -1777,9 +1777,11 @@ export default function Pesquisar() {
             </Text>
             <Text style={styles.nota}>
               {batismo?.tipo === 'lista'
-                ? marcadosLista.length > 0
+                ? marcadosLista.length > 1
                   ? t('pesq.lista_com_marcados', { n: marcadosLista.length })
-                  : t('pesq.lista_vazia_aviso')
+                  : marcadosLista.length === 1
+                    ? t('pesq.lista_com_marcada')
+                    : t('pesq.lista_vazia_aviso')
                 : t('pesq.guardar_explica')}
             </Text>
             <Campo
@@ -2908,14 +2910,22 @@ const styles = StyleSheet.create({
   resultados: { flex: 1, minWidth: 0 },
   // A cabeça dos resultados: contagem à esquerda, arrumação empurrada para a
   // direita. Uma linha só — se rebentar, é sinal de que há chips a mais.
+  // A fila QUEBRA em vez de espremer. Eram a contagem + o rótulo + quatro
+  // chips de ordenação numa linha só: a contagem, sendo a única com `flex: 1`,
+  // era o que cedia — chegava a `width: 0` e desaparecia (a 1024 e 1100 nunca
+  // aparecia; a 1440 sumia ao abrir o painel de provas). A contagem é a noção
+  // do universo em que se está a mexer; se alguma coisa tem de mudar de linha,
+  // é a arrumação, não o número.
   cabecaRes: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    rowGap: Espaco.xs,
     gap: Espaco.sm,
     paddingHorizontal: Espaco.md,
     paddingTop: Espaco.sm,
   },
-  contagem: { flex: 1, minWidth: 0, fontSize: 13, color: Honra.tintaSuave },
+  contagem: { flexGrow: 1, flexShrink: 0, minWidth: 150, fontSize: 13, color: Honra.tintaSuave },
   contagemForte: { color: Honra.tinta, fontWeight: '700' },
   ordRotulo: { ...TextoAcao, fontSize: 12.5, color: Honra.tintaSuave },
   lista: { padding: Espaco.md, gap: Espaco.sm },

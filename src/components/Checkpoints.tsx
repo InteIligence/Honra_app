@@ -6,7 +6,7 @@
  * marca informada (nunca emboscada), tratada pelo resolver.
  */
 import { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Botao, Campo, formatarData } from '@/components/ui';
 import { useT, type ChaveI18n } from '@/i18n';
@@ -27,6 +27,7 @@ const VERDE = ['entregue', 'confirmado'];
 // Foto de evidência (bucket privado → URL assinado, só as partes).
 function FotoEvidencia({ caminho }: { caminho: string }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [aberta, setAberta] = useState(false);
   useEffect(() => {
     let vivo = true;
     supabase.storage
@@ -38,7 +39,27 @@ function FotoEvidencia({ caminho }: { caminho: string }) {
     };
   }, [caminho]);
   if (!url) return null;
-  return <Image source={{ uri: url }} style={styles.foto} resizeMode="cover" />;
+  return (
+    <>
+      {/* A PROVA TEM DE SE VER INTEIRA. Estava em `cover`: um screenshot largo
+          ficava recortado ao meio e o que se via eram quatro letras gigantes.
+          Numa casa onde a entrega se paga contra esta imagem, uma prova que
+          não se lê não é prova nenhuma — é uma miniatura decorativa por cima
+          de dinheiro real.
+
+          `contain` mostra a imagem toda; o toque abre-a em grande, porque a
+          160px de altura nem tudo se decide. É o mesmo padrão que a Entrega
+          (065) já usava — este ficou para trás. */}
+      <Pressable onPress={() => setAberta(true)} accessibilityRole="imagebutton">
+        <Image source={{ uri: url }} style={styles.foto} resizeMode="contain" />
+      </Pressable>
+      <Modal visible={aberta} transparent animationType="fade" onRequestClose={() => setAberta(false)}>
+        <Pressable style={styles.veuProva} onPress={() => setAberta(false)}>
+          <Image source={{ uri: url }} style={styles.provaGrande} resizeMode="contain" />
+        </Pressable>
+      </Modal>
+    </>
+  );
 }
 
 type Accoes = {
@@ -320,6 +341,14 @@ const styles = StyleSheet.create({
   evidTexto: { fontSize: 14, color: Honra.tinta, lineHeight: 20 },
   contesta: { fontSize: 13, color: Honra.tinta, lineHeight: 19, fontStyle: 'italic' },
   foto: { width: '100%', height: 160, borderRadius: Raio.md, backgroundColor: Honra.cremeEscuro, marginTop: Espaco.xs },
+  veuProva: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Espaco.md,
+  },
+  provaGrande: { width: '100%', height: '100%' },
   acaoBloco: { gap: Espaco.sm, marginTop: Espaco.xs },
   acaoRotulo: { color: Honra.tintaSuave, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   fotoLinha: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

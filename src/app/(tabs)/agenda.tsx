@@ -647,9 +647,14 @@ export default function Agenda() {
           {sub ? <Text style={styles.itemSub}>{sub}</Text> : null}
         </View>
         {direita}
+        {/* O ALVO DE APAGAR MEDE 44px. Media 12×24 e apagava sem perguntar —
+            um polegar acerta-lhe por acidente ao rolar a lista, e o que
+            desaparece é uma coisa que a pessoa escreveu. O `hitSlop` ajudava
+            no toque mas não no engano: a área maior está agora no próprio
+            botão, com o × a manter o tamanho discreto que tinha. */}
         <Pressable
           onPress={aoEliminar}
-          hitSlop={10}
+          style={styles.eliminarAlvo}
           accessibilityRole="button"
           accessibilityLabel={t('agenda.a11y_eliminar', { titulo: texto })}
         >
@@ -1112,6 +1117,7 @@ const styles = StyleSheet.create({
   seloComp: { backgroundColor: Honra.verde },
   seloAperta: { backgroundColor: Honra.dourado },
   eliminar: { color: Honra.tintaSuave, fontSize: 20, fontWeight: '400', opacity: 0.7 },
+  eliminarAlvo: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
   // O vazio: uma frase serena, sem moldura. Um dia livre não é um estado de erro.
   livre: {

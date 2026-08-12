@@ -27,7 +27,12 @@ const ESTADO_TXT: Record<string, ChaveI18n> = {
   pedido: 'estado.pedido',
   aceite: 'estado.aceite',
   selado: 'estado.selado_longo',
-  honrado: 'estado.honrado_v',
+  // `honrado` NÃO leva o ✓. O ✓ verde lê-se como fim de linha, e este estado é
+  // o meio do caminho: o aperto foi honrado, a entrega ainda não aconteceu. No
+  // mesmo cartão via-se "Honrado ✓" e por baixo "À espera da entrega" — duas
+  // frases que se desmentem. O ✓ fica para `concluido`, que é quando acabou
+  // mesmo. Aqui diz-se só "Honrado", que é a verdade sem prometer o resto.
+  honrado: 'estado.honrado',
   entregue: 'estado.entregue',
   concluido: 'estado.concluido',
   incumprido: 'estado.nao_cumprido',

@@ -196,7 +196,7 @@ export function PainelCategorias({
                       </View>
                       <View style={styles.areaMeio}>
                         <Text style={styles.areaNome}>{mae.nome}</Text>
-                        <Text style={styles.areaSub}>{t('cats.n_areas', { n: filhas.length })}</Text>
+                        <Text style={styles.areaSub}>{filhas.length === 1 ? t('cats.uma_area') : t('cats.n_areas', { n: filhas.length })}</Text>
                       </View>
                       <Feather name="chevron-right" size={18} color={Honra.tintaSuave} />
                     </Pressable>
