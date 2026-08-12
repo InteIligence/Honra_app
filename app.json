@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -32,11 +32,24 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser",
+      "expo-notifications",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5a2ea26c-8f41-48e5-a5fd-1ff311fb0939"
+      }
+    },
+    "owner": "brokenchoose"
   }
 }

@@ -31,6 +31,14 @@ yarn-error.*
 *.pem
 
 # local env files
+# ATENCAO (08/08): aqui so estava `.env*.local`, que NAO apanha o `.env` da
+# raiz — o ficheiro onde vivem as chaves do Supabase. Um `git add -A` levava-o
+# para dentro, e num repo com remote as chaves ficavam no HISTORICO, que nao se
+# limpa com um `rm`. O `.env.example` fica de fora do ignore de proposito: e' o
+# molde sem valores, e e' o que diz a quem clonar de que variaveis precisa.
+.env
+.env.*
+!.env.example
 .env*.local
 
 # typescript
@@ -41,3 +49,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Segredos de deploy (Honra)
+supabase/.env*
+.stripe-*

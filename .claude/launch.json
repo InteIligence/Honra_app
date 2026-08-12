@@ -1,0 +1,46 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "honra-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "./scripts/dev-web.sh"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "honra-web-2",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "./scripts/dev-web-porta.sh"
+      ],
+      "port": 8082
+    },
+    {
+      "name": "honra-web-clean",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "./scripts/dev-web-clean.sh"
+      ],
+      "port": 8090
+    },
+    {
+      "name": "honra-dist",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "scripts/serve-dist.py",
+        "8095"
+      ],
+      "port": 8095
+    },
+    {
+      "name": "honra-tunel",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "./scripts/dev-web-tunel.sh"
+      ],
+      "port": 8081
+    }
+  ]
+}
