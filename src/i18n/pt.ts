@@ -648,6 +648,8 @@ export const pt = {
   'pesq.pedido.verao_quantos': 'Cada pessoa vai ver que pediste a {n}.',
   'pesq.pedido.enviar': 'Enviar',
   'pesq.pedido.erro': 'Não foi possível enviar os pedidos. Tenta de novo.',
+  'pesq.pedido.minimo': 'Escreve o que precisas — pelo menos uma frase.',
+  'pesq.pedido.enviados': 'Pedido enviado a {n} pessoa(s). Vê em Orçamentos.',
   'pesq.sem_nome': 'Sem nome',
   'pesq.sem_funcao': 'Sem função definida',
   'pesq.disponivel': 'Disponível',
@@ -876,6 +878,9 @@ export const pt = {
   'idverif.pedir': 'Para pedir um orçamento, verifica primeiro a tua identidade.',
   'idverif.conversa': 'Para iniciar uma conversa, verifica primeiro a tua identidade.',
   'pesq.falar_bloqueado': 'Não é possível falar com esta pessoa.',
+  'pesq.ver_perfil_de': 'Ver o perfil de {nome}',
+  'pesq.pedir_curto': 'Pedir orçamento',
+  'pesq.lista_curto': 'Guardar',
   'idverif.avaliar': 'Para avaliar, verifica primeiro a tua identidade.',
   'idverif.escolher': 'Para abrir um orçamento a um candidato, verifica primeiro a tua identidade.',
   'idverif.sub': 'A honra começa na identidade real.',
@@ -1187,7 +1192,7 @@ export const pt = {
   // — O mês e o dia (calendário) —
   'agenda.mes_anterior': 'Mês anterior',
   'agenda.mes_seguinte': 'Mês seguinte',
-  'agenda.ir_hoje': 'Hoje',
+  'agenda.ir_hoje': 'Ir a hoje',
   'agenda.a11y_dia': 'Dia {data}',
   // O vazio do dia: UMA frase, serena. Não explica o produto nem dá ordens.
   'agenda.dia_vazio': 'Dia livre.',
@@ -1200,6 +1205,7 @@ export const pt = {
   'agenda.a11y_confirmar': 'Confirmar: {texto}',
   'agenda.a11y_repor_nota': 'Repor por confirmar: {texto}',
   'agenda.notif_titulo': 'Agenda · Honra',
+  'agenda.hoje_etiqueta': 'Hoje',
 
   // ===== REDE =====
   'rede.titulo': 'A tua rede',

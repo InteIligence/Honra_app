@@ -320,7 +320,10 @@ function InsigniaBase({
         width={30}
         height={192}
         fill="url(#brilho)"
-        transform="skewX(-14deg)"
+        // Em SVG o skewX é SEM UNIDADE. Com "deg" o browser descarta a
+        // transformação inteira (e a consola diz `Expected ')'`), por isso
+        // o varrimento de brilho passava a direito em vez de inclinado.
+        transform="skewX(-14)"
         opacity={kf(inicio, duracao, [
           [0, 0],
           [12, 0.9],
@@ -683,7 +686,7 @@ function InsigniaBase({
                 width={16}
                 height={86}
                 fill="url(#brilho)"
-                transform="skewX(-16deg)"
+                transform="skewX(-16)"
                 opacity={kf(6200, 1200, [
                   [0, 0],
                   [22, 0.95],

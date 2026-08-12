@@ -401,7 +401,13 @@ export default function PerfilScreen() {
         {verde ? <Text style={styles.vvDotCheck}>✓</Text> : null}
       </View>
       <Text style={[styles.vvTxt, !verde && styles.vvTxtFalta]}>{rotulo}</Text>
-      {nota ? <Text style={styles.vvNota}>{nota}</Text> : null}
+      {/* A nota só existe quando a aba NÃO está verde. Desenhava-se sempre, e
+          o resultado era o disco verde com ✓ seguido de "por verificar" na
+          mesma linha — no verso do Honra Card, que é a peça onde a promessa
+          da casa está mais nua. Num produto cujo alicerce é "verde quer dizer
+          verificado", um ✓ desmentido ao lado não é um defeito de texto: é a
+          casa a contradizer-se no sítio que mais se mostra. */}
+      {nota && !verde ? <Text style={styles.vvNota}>{nota}</Text> : null}
     </View>
   );
 
@@ -537,12 +543,11 @@ export default function PerfilScreen() {
   const grelhaBaixoD = (
     <View style={styles.baixo}>
       <View style={styles.baixoPrincipal}>
-        <View style={styles.baixoCabeca}>
-          <Text style={styles.rotulo}>{t('perfil.portefolio')}</Text>
-          <Pressable onPress={() => router.push('/editar-perfil?foco=portefolio' as Href)}>
-            <Text style={styles.gerir}>{t('perfil.gerir')}</Text>
-          </Pressable>
-        </View>
+        {/* O cabeçalho vem DE DENTRO da galeria (`Portfolio.tsx`), que já traz
+            o seu rótulo e o "Gerir ›". Havia aqui um segundo, e no ecrã lia-se
+            "PORTEFÓLIOGerir › PORTEFÓLIO Gerir ›" — o primeiro par sem um
+            pixel de folga entre as palavras. Só acontecia na Secretária, que é
+            o ramo que menos se testa a olho. */}
         {uid && <PortfolioGaleria perfilId={uid} proprio />}
       </View>
       <View style={styles.baixoLateral}>

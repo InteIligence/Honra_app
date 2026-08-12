@@ -648,6 +648,8 @@ export const en: Record<keyof typeof pt, string> = {
   'pesq.pedido.verao_quantos': 'Each person will see you asked {n}.',
   'pesq.pedido.enviar': 'Send',
   'pesq.pedido.erro': 'Could not send the requests. Try again.',
+  'pesq.pedido.minimo': 'Say what you need — at least one sentence.',
+  'pesq.pedido.enviados': 'Request sent to {n} people. See it in Quotes.',
   'pesq.sem_nome': 'Unnamed',
   'pesq.sem_funcao': 'No role set',
   'pesq.disponivel': 'Available',
@@ -871,6 +873,9 @@ export const en: Record<keyof typeof pt, string> = {
   'idverif.pedir': 'To request a quote, verify your identity first.',
   'idverif.conversa': 'To start a conversation, verify your identity first.',
   'pesq.falar_bloqueado': 'You cannot message this person.',
+  'pesq.ver_perfil_de': "View {nome}'s profile",
+  'pesq.pedir_curto': 'Request quote',
+  'pesq.lista_curto': 'Save',
   'idverif.avaliar': 'To leave a review, verify your identity first.',
   'idverif.escolher': 'To open a quote with a candidate, verify your identity first.',
   'idverif.sub': 'Honor starts with a real identity.',
@@ -1171,7 +1176,7 @@ export const en: Record<keyof typeof pt, string> = {
   // — The month and the day (calendar) —
   'agenda.mes_anterior': 'Previous month',
   'agenda.mes_seguinte': 'Next month',
-  'agenda.ir_hoje': 'Today',
+  'agenda.ir_hoje': 'Go to today',
   'agenda.a11y_dia': 'Day {data}',
   // The empty day: ONE calm line. It doesn't explain the product or give orders.
   'agenda.dia_vazio': 'A free day.',
@@ -1184,6 +1189,7 @@ export const en: Record<keyof typeof pt, string> = {
   'agenda.a11y_confirmar': 'Confirm: {texto}',
   'agenda.a11y_repor_nota': 'Set back to unconfirmed: {texto}',
   'agenda.notif_titulo': 'Agenda · Honra',
+  'agenda.hoje_etiqueta': 'Today',
 
   // ===== NETWORK =====
   'rede.titulo': 'Your network',

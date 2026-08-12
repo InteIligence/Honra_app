@@ -102,10 +102,23 @@ export default function PerfilPublico() {
     setErroCarregar(null);
     setStatsCli(null);
     setTrabAbertos([]);
-    // Perfil (é o dado principal — o seu erro é o erro do ecrã)
+    // Perfil (é o dado principal — o seu erro é o erro do ecrã).
+    //
+    // AS COLUNAS DIZEM-SE UMA A UMA, e não `select('*')`. A 066 pôs GRANTS POR
+    // COLUNA em `perfis` (é assim que o `nif` fica invisível a quem não é o
+    // dono), e pedir `*` faz o PostgREST pedir TODAS — inclusive as que
+    // ninguém tem direito a ler. Resultado: 42501 sempre, para qualquer
+    // perfil, ATÉ O PRÓPRIO. Este ecrã estava partido desde essa migração e
+    // ninguém deu por isso, porque o erro era mostrado como "Não foi possível
+    // carregar este perfil" — que soa a rede em baixo, não a permissões.
+    //
+    // Regra a levar daqui: numa tabela com grants por coluna, `select('*')` é
+    // uma bomba com rastilho — só rebenta quando alguém tirar um grant.
     supabase
       .from('perfis')
-      .select('*')
+      .select(
+        'id, nome, handle, papel, cidade, avatar, avatar_url, tipo, disponibilidade, indice_confianca, negocios_honrados, negocios_falhados, apertos_selados, cancelados_mutuo, criado_em'
+      )
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
@@ -266,42 +279,39 @@ export default function PerfilPublico() {
   async function abrirConversa() {
     if (!session || !id) return;
     setAcaoMsg(null);
-    // Suspenso: iniciar conversa cria um pedido — travado enquanto durar a
-    // suspensão (escada de suspensão, 048). Motivo honesto, não um erro cru.
+    // Suspenso: iniciar conversa e' um gesto NOVO — travado enquanto durar a
+    // suspensao (escada de suspensao, 048). Motivo honesto, nao um erro cru.
     if (contaSuspensa) {
       setAcaoMsg(t('susp.gesto_conversa'));
       return;
     }
     setAAbrirConversa(true);
-    // Negócio já partilhado com esta pessoa? (a RLS já me limita aos meus.)
-    const { data: existentes } = await supabase
-      .from('orcamentos')
-      .select('id')
-      .or(`de_perfil.eq.${id},para_perfil.eq.${id}`)
-      .order('criado_em', { ascending: false })
-      .limit(1);
-    let convId = ((existentes as any[]) ?? [])[0]?.id as string | undefined;
-    if (!convId && !minhaIdVerificada) {
-      // Criar uma conversa cria um pedido — e pedir exige identidade (043).
-      setAAbrirConversa(false);
-      setAcaoMsg(t('idverif.conversa'));
+
+    // ── CONVERSA LIVRE (075), como na Pesquisa ─────────────────────────────
+    // Este ecra ficou para tras quando a 075 chegou: continuava a criar um
+    // ORCAMENTO com a descricao "Conversa" e estado "pedido" — exatamente o
+    // que a 075 veio abolir, porque dizer "ola" a alguem nao pode custar um
+    // pedido de orcamento que a outra pessoa tem de aceitar ou recusar (e que,
+    // recusado, matava a conversa).
+    //
+    // Alem de errado, dava erro: o insert fazia `.select().single()`, e ler o
+    // orcamento acabado de criar passa por guardas que so se cumprem depois —
+    // a mesma armadilha do `return=representation` que nos custou meia hora no
+    // bug dos grupos (079). Nao se remenda o insert: tira-se o insert.
+    //
+    // A funcao do servidor ordena o par, reaproveita a conversa que ja exista
+    // e trava bloqueios nos dois sentidos, por isso nunca nascem duplicados.
+    const { data, error } = await supabase.rpc('abrir_conversa_livre', { p_com: id });
+    setAAbrirConversa(false);
+    if (error || !data) {
+      setAcaoMsg(
+        String(error?.message ?? '').includes('bloqueado')
+          ? t('pesq.falar_bloqueado')
+          : t('idverif.conversa')
+      );
       return;
     }
-    if (!convId) {
-      const { data: novo, error } = await supabase
-        .from('orcamentos')
-        .insert({ de_perfil: session.user.id, para_perfil: id, descricao: 'Conversa', estado: 'pedido' })
-        .select('id')
-        .single();
-      if (error || !novo) {
-        setAAbrirConversa(false);
-        setAcaoMsg(t('pperfil.erro_conversa'));
-        return;
-      }
-      convId = (novo as any).id as string;
-    }
-    setAAbrirConversa(false);
-    router.push(`/conversa/${convId}`);
+    router.push(`/conversa/${data as string}?livre=1`);
   }
 
   const ehProprio = session?.user.id === id;

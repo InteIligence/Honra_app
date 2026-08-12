@@ -1,8 +1,9 @@
 import { Feather } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { router, useFocusEffect, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  RefreshControl,
   Modal,
   Pressable,
   ScrollView,
@@ -170,6 +171,8 @@ export default function Pesquisar() {
   const colunas = largo ? 2 : 1;
   // Segmento activo — o eixo "o que procuro". 'trabalho' abre o mural; os restantes são perfis.
   const [segmento, setSegmento] = useState<Segmento>('todas');
+  /** A tira dos separadores (telemóvel): desloca-se para mostrar o escolhido. */
+  const tiraSegmentos = useRef<ScrollView>(null);
   // Mural de oportunidades (contrato partilhado em @/lib/trabalho).
   const { trabalhos, aCarregar: trabACarregar, erro: trabErro } = useTrabalhos();
   const [perfis, setPerfis] = useState<Perfil[]>([]);
@@ -239,10 +242,19 @@ export default function Pesquisar() {
   const [pedidoErro, setPedidoErro] = useState<string | null>(null);
   const [pedidoFeito, setPedidoFeito] = useState(0);
   const [aCarregar, setACarregar] = useState(true);
+  const [aAtualizar, setAAtualizar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
+  /**
+   * CARREGAR TUDO — a lista, os selos, a taxonomia, os bloqueios e o elo.
+   *
+   * Vivia dentro do `useFocusEffect` e mais ninguem lhe chegava. Ao dar ao
+   * gesto de PUXAR PARA ATUALIZAR (a lista e' de pessoas, e as pessoas mudam
+   * de estado a toda a hora — honram um negocio, ficam disponiveis, acendem
+   * um selo), passou a ser preciso chama-lo de dois sitios. Fica aqui, com
+   * nome, e ambos o chamam.
+   */
+  const carregarTudo = useCallback(() => {
       if (!session) return;
       let vivo = true;
       setErro(null);
@@ -371,8 +383,29 @@ export default function Pesquisar() {
       return () => {
         vivo = false;
       };
-    }, [session, t])
-  );
+  }, [session, t]);
+
+  useFocusEffect(carregarTudo);
+
+  // Sempre que o separador muda, a tira leva-o para dentro do ecrã. O cálculo
+  // é grosseiro de propósito (posição pelo índice): o que interessa é nunca
+  // haver um separador escolhido que não se vê, e para isso chega.
+  useEffect(() => {
+    const i = SEGMENTOS.findIndex((s) => s.chave === segmento);
+    if (i < 0) return;
+    tiraSegmentos.current?.scrollTo({ x: Math.max(0, i * 110 - 40), animated: true });
+  }, [segmento]);
+
+  /** PUXAR PARA ATUALIZAR — o gesto que toda a gente ja tenta sem pensar. */
+  const atualizar = useCallback(() => {
+    setAAtualizar(true);
+    carregarTudo();
+    // A roda para ao fim de um tempo curto e fixo, e nao quando a ultima
+    // consulta responder: sao SETE consultas em paralelo, e prender a roda a
+    // mais lenta fazia o gesto parecer avariado nos dias maus da rede. O que
+    // importa e' a lista mexer — e essa chega primeiro.
+    setTimeout(() => setAAtualizar(false), 900);
+  }, [carregarTudo]);
 
   /**
    * As PROVAS de quem está em foco (3a) — quem o honrou, com a estrela.
@@ -689,15 +722,30 @@ export default function Pesquisar() {
    * ANTES de o gastar. É o oposto exato da lead-mill, que vende o mesmo pedido
    * a cinco pessoas e deixa cada uma pensar que é a única.
    */
+  /**
+   * O MÍNIMO PARA UM PEDIDO SER UM PEDIDO.
+   *
+   * O botão de enviar estava sempre aceso e aceitava campo vazio: fechava o
+   * diálogo sem dizer nada e do outro lado caía um "Pedido de orçamento" sem
+   * uma palavra. Quem recebe não faz ideia do que lhe estão a pedir, e num
+   * sítio onde responder a um pedido é dar a cara, mandar vazio é fazer perder
+   * o tempo de alguém com a chancela da casa.
+   *
+   * Quinze caracteres é o tamanho de "preciso de fotos" — não é uma exigência,
+   * é o chão de uma frase.
+   */
+  const MINIMO_PEDIDO = 15;
+  const pedidoPronto = pedidoDesc.trim().length >= MINIMO_PEDIDO;
+
   async function enviarPedidos() {
-    if (!session || marcadosLista.length === 0) return;
+    if (!session || marcadosLista.length === 0 || !pedidoPronto) return;
     setPedidoErro(null);
     setAPedir(true);
     const quantos = marcadosLista.length;
     const base = marcadosLista.map((p) => ({
       de_perfil: session.user.id,
       para_perfil: p.id,
-      descricao: pedidoDesc.trim() || t('pesq.pedido.sem_texto'),
+      descricao: pedidoDesc.trim(),
       estado: 'pedido',
     }));
     // O cliente NÃO manda o número (073): quem conta é o servidor, que vê as
@@ -709,7 +757,12 @@ export default function Pesquisar() {
       setPedidoErro(t('pesq.pedido.erro'));
       return;
     }
+    // CONFIRMAR O ENVIO. O `pedidoFeito` existia e nunca era lido: o diálogo
+    // fechava-se e mais nada acontecia no ecrã. Quem carrega em Enviar e não
+    // vê sinal nenhum tem de ir a Orçamentos verificar se aquilo saiu — ou
+    // carrega outra vez, e manda duas.
     setPedidoFeito(quantos);
+    setTimeout(() => setPedidoFeito(0), 5000);
     setMarcados(new Set());
     setPedidoDesc('');
     setPedidoAberto(false);
@@ -1111,8 +1164,19 @@ export default function Pesquisar() {
       ) : (
         <>
           <Text style={styles.titulo}>{t('pesq.titulo')}</Text>
-          {/* Segmentação — o eixo "o que procuro". Refina-se DENTRO com os filtros. */}
+          {/* Segmentação — o eixo "o que procuro". Refina-se DENTRO com os filtros.
+
+              A TIRA LEVA O SEPARADOR ESCOLHIDO PARA DENTRO DO ECRÃ. São 466px
+              de separadores em 375px: "Profissionais" ficava em x 344→433, ou
+              seja, escolhido e fora do ecrã ao mesmo tempo. Quem chegasse por
+              um atalho ou voltasse a este separador via a tira aparentemente
+              parada em "Todos", sem sinal nenhum de que havia mais à direita.
+
+              O indicador de scroll fica escondido de propósito (é ruído numa
+              tira de quatro), mas esconder o indicador obriga a garantir que o
+              que importa está sempre à vista — é a contrapartida. */}
           <ScrollView
+            ref={tiraSegmentos}
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.filtroFaixa}
@@ -1439,6 +1503,20 @@ export default function Pesquisar() {
           columnWrapperStyle={!largo && colunas > 1 ? styles.gridLinha : undefined}
           contentContainerStyle={[styles.lista, largo && styles.listaLarga]}
           keyboardShouldPersistTaps="handled"
+          // PUXAR PARA ATUALIZAR. Numa lista de PESSOAS o gesto não é enfeite:
+          // o que se vê aqui — quem está disponível, quem honrou mais um
+          // negócio, que selo acendeu — muda a toda a hora, e quem procura
+          // alguém para hoje precisa de saber que está a ver o de agora. Sem
+          // isto, a única forma de atualizar era sair do separador e voltar,
+          // que ninguém adivinha.
+          refreshControl={
+            <RefreshControl
+              refreshing={aAtualizar}
+              onRefresh={atualizar}
+              tintColor={Honra.verde}
+              colors={[Honra.verde]}
+            />
+          }
           ItemSeparatorComponent={largo ? () => <View style={styles.linhaRisco} /> : undefined}
           renderItem={({ item: misto }) => {
             // SECRETÁRIA: a busca é uma LISTA (3a) — compara-se melhor em
@@ -1502,12 +1580,32 @@ export default function Pesquisar() {
                       </Text>
                       {verificados.has(item.id) && <Text style={styles.selo}>✓</Text>}
                       {/* Disponibilidade = a esfera junto ao ✓ (sem a palavra: o
-                          ponto verde já diz tudo). */}
-                      {disponivel && <View style={styles.dispDotInline} />}
-                      {item.tipo === 'empresa' && (
+                          ponto verde já diz tudo). Em ecrã estreito desce para
+                          a linha de baixo: media 8px, e eram exatamente os 8px
+                          que faltavam para "Palco & Luz Produções" caber
+                          inteiro. Entre saber o nome de quem se procura e
+                          saber se está livre, o nome vem primeiro — e o ponto
+                          continua ali, uma linha abaixo. */}
+                      {disponivel && largo && <View style={styles.dispDotInline} />}
+                      {/* A pastilha "Empresa" NÃO entra nesta linha em ecrã
+                          estreito. Media 53px e empurrava o nome para 79px
+                          quando ele precisava de 176 — "Palco & Luz Produções"
+                          ficava "Palco & …". O nome é a informação mais
+                          importante do cartão: a etiqueta do tipo de conta
+                          pode esperar pela linha de baixo, mas o nome não pode
+                          ser um mistério. */}
+                      {item.tipo === 'empresa' && largo && (
                         <Pill texto={t('pesq.empresa_pill')} variante="empresa" />
                       )}
                     </View>
+                    {!largo && (disponivel || item.tipo === 'empresa') && (
+                      <View style={styles.pillAbaixo}>
+                        {disponivel && <View style={styles.dispDotInline} />}
+                        {item.tipo === 'empresa' && (
+                          <Pill texto={t('pesq.empresa_pill')} variante="empresa" />
+                        )}
+                      </View>
+                    )}
                     <Text style={styles.sub} numberOfLines={1}>
                       {item.papel ?? t('pesq.sem_funcao')}
                       {item.cidade ? ` · ${item.cidade}` : ''}
@@ -1563,10 +1661,16 @@ export default function Pesquisar() {
                     rotulo={t('pesq.media')}
                     apagado={!(Number(item.indice_confianca ?? 0) > 0)}
                   />
-                  {/* Falar com a pessoa sem sair da busca. */}
+                  {/* Falar com a pessoa sem sair da busca. O ícone é um balão
+                      e a etiqueta diz "falar", mas isto levava ao PERFIL —
+                      exatamente o mesmo que carregar no cartão. Um símbolo que
+                      promete uma coisa e faz outra é a mesma falta do sino do
+                      despertador: a promessa está no ícone, não na intenção de
+                      quem o pôs. Agora abre mesmo a conversa. */}
                   <Pressable
                     style={styles.acaoCartao}
-                    onPress={() => router.push(`/perfil/${item.id}`)}
+                    onPress={() => abrirConversa(item.id)}
+                    disabled={aFalar}
                     accessibilityLabel={t('pesq.falar')}
                   >
                     <Feather
@@ -1587,36 +1691,73 @@ export default function Pesquisar() {
         />
       )}
 
+      {/* O RECADO DE QUE SAIU. Verde porque correu bem, curto porque a pessoa
+          já sabe o que fez, e some sozinho — um aviso permanente deixa de ser
+          aviso e passa a ser mobília. */}
+      {pedidoFeito > 0 ? (
+        <View style={styles.recadoOk}>
+          <Feather name="check-circle" size={15} color={Honra.verde} />
+          <Text style={styles.recadoOkTxt}>{t('pesq.pedido.enviados', { n: pedidoFeito })}</Text>
+        </View>
+      ) : null}
+
       {/* A BARRA DOS MARCADOS — só existe quando há alguém marcado. Diz os
           nomes, não só a contagem: são pessoas. Não há "marcar todos" (era o
-          spray por outra porta) nem teto (pedir a oito pintores é são). */}
+          spray por outra porta) nem teto (pedir a oito pintores é são).
+
+          NO TELEMÓVEL QUEBRA EM DUAS ALTURAS: cinco coisas em linha não cabem
+          em 390px, e o bloco dos nomes — o único com `flex: 1` — era o que
+          encolhia. Colapsava à largura de uma letra e a palavra "Marcados"
+          partia-se na vertical, enquanto o botão de pedir saía fora do ecrã.
+          Apertar tipos e espaços só adiava o problema: o que não cabe numa
+          linha tem de ocupar duas. */}
       {marcadosLista.length > 0 && (
-        <View style={[styles.barra, largo && styles.barraLarga]}>
-          <View style={styles.barraNum}>
-            <Text style={styles.barraNumTxt}>{marcadosLista.length}</Text>
+        <View style={[styles.barra, largo ? styles.barraLarga : styles.barraEstreita]}>
+          <View style={styles.barraLinha}>
+            <View style={styles.barraNum}>
+              <Text style={styles.barraNumTxt}>{marcadosLista.length}</Text>
+            </View>
+            <View style={styles.barraTextos}>
+              <Text style={styles.barraTitulo} numberOfLines={1}>
+                {t('pesq.marcados')}
+              </Text>
+              <Text style={styles.barraNomes} numberOfLines={1}>
+                {marcadosLista.map((p) => p.nome ?? t('pesq.sem_nome')).join(', ')}
+              </Text>
+            </View>
+            <Pressable style={styles.barraLimpar} onPress={() => setMarcados(new Set())} hitSlop={8}>
+              <Text style={styles.barraLimparTxt}>{t('data.limpar')}</Text>
+            </Pressable>
           </View>
-          <View style={styles.barraTextos}>
-            <Text style={styles.barraTitulo}>{t('pesq.marcados')}</Text>
-            <Text style={styles.barraNomes} numberOfLines={1}>
-              {marcadosLista.map((p) => p.nome ?? t('pesq.sem_nome')).join(', ')}
-            </Text>
-          </View>
-          <Pressable style={styles.barraLimpar} onPress={() => setMarcados(new Set())} hitSlop={8}>
-            <Text style={styles.barraLimparTxt}>{t('data.limpar')}</Text>
-          </Pressable>
+
           {/* Guardar é curadoria (privado, não avisa ninguém); pedir orçamento é
-              um ato público. Por isso guardar fala baixo e pedir fala alto. */}
-          <Pressable
-            style={styles.barraSegunda}
-            onPress={() => setBatismo({ tipo: 'lista', nome: '' })}
-          >
-            <Text style={styles.barraSegundaTxt}>{t('pesq.guardar_lista')}</Text>
-          </Pressable>
-          <Pressable style={styles.barraAcao} onPress={() => setPedidoAberto(true)}>
-            <Text style={styles.barraAcaoTxt}>
-              {t('pesq.pedir_a_n', { n: marcadosLista.length })}
-            </Text>
-          </Pressable>
+              um ato público. Por isso guardar fala baixo e pedir fala alto —
+              e é por isso que, quando partem para outra linha, é o de pedir
+              que fica maior. */}
+          <View style={[styles.barraLinha, !largo && styles.barraBotoes]}>
+            <Pressable
+              style={[styles.barraSegunda, !largo && styles.barraBotaoEstica]}
+              onPress={() => setBatismo({ tipo: 'lista', nome: '' })}
+            >
+              <Text style={styles.barraSegundaTxt} numberOfLines={1}>
+                {largo ? t('pesq.guardar_lista') : t('pesq.lista_curto')}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.barraAcao, !largo && styles.barraBotaoAcaoEstica]}
+              onPress={() => setPedidoAberto(true)}
+            >
+              {/* Em ecrã estreito o rótulo encurta. Não é apertar a letra: a
+                  barra já diz "Marcados" e o número mesmo por cima, e repetir
+                  a contagem dentro do botão era o que o fazia transbordar.
+                  Medido: faltavam 14px a este e 17px ao do lado. */}
+              <Text style={styles.barraAcaoTxt} numberOfLines={1}>
+                {largo
+                  ? t('pesq.pedir_a_n', { n: marcadosLista.length })
+                  : t('pesq.pedir_curto')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       )}
 
@@ -1763,15 +1904,21 @@ export default function Pesquisar() {
               </Text>
             ) : null}
             {pedidoErro ? <Erro texto={pedidoErro} /> : null}
+            {/* Um botão apagado sem explicação é uma parede. A dica só aparece
+                quando a pessoa já começou a escrever — antes disso o campo
+                vazio fala por si e um aviso seria ralhar antes do tempo. */}
+            {!pedidoPronto && pedidoDesc.trim().length > 0 ? (
+              <Text style={styles.pedidoDica}>{t('pesq.pedido.minimo')}</Text>
+            ) : null}
 
             <View style={styles.cartaRodape}>
               <Pressable onPress={() => setPedidoAberto(false)} hitSlop={8}>
                 <Text style={styles.cartaRodapeTxt}>{t('comum.fechar')}</Text>
               </Pressable>
               <Pressable
-                style={[styles.barraAcao, aPedir && styles.barraAcaoInativa]}
+                style={[styles.barraAcao, (aPedir || !pedidoPronto) && styles.barraAcaoInativa]}
                 onPress={enviarPedidos}
-                disabled={aPedir}
+                disabled={aPedir || !pedidoPronto}
               >
                 <Text style={styles.barraAcaoTxt}>
                   {aPedir ? t('comum.a_enviar') : t('pesq.pedido.enviar')}
@@ -1794,7 +1941,22 @@ export default function Pesquisar() {
         >
           {/* A CREDENCIAL — a peça verde, como no Honra Card. */}
           <View style={styles.credencial}>
-            <View style={styles.credTopo}>
+            {/* O TOPO É A PORTA PARA O PERFIL INTEIRO.
+                Este painel é um resumo: diz quem é, quanto vale a palavra e
+                quem o honrou. Mas o que decide se contratas alguém — o
+                portefólio, os trabalhos comprovados, as avaliações por
+                extenso — vive no perfil, e daqui não havia como lá chegar.
+                Um resumo sem porta é um beco.
+
+                A porta é a CARA e o NOME, não um botão a mais: é onde toda a
+                gente carrega por instinto quando quer saber mais de alguém.
+                A seta ao lado existe só para o dizer a quem não arrisca. */}
+            <Pressable
+              style={styles.credTopo}
+              onPress={() => router.push(`/perfil/${focado.id}` as Href)}
+              accessibilityRole="button"
+              accessibilityLabel={t('pesq.ver_perfil_de', { nome: focado.nome ?? '' })}
+            >
               <Avatar
                 iniciais={focado.avatar}
                 imagem={
@@ -1817,7 +1979,8 @@ export default function Pesquisar() {
                   {focado.cidade ? ` · ${focado.cidade}` : ''}
                 </Text>
               </View>
-            </View>
+              <Feather name="chevron-right" size={18} color={Honra.douradoClaro} />
+            </Pressable>
 
             <View style={styles.credConfLinha}>
               <Text style={styles.credPct}>
@@ -2837,6 +3000,7 @@ const styles = StyleSheet.create({
   cartaoTrabalho: { flexDirection: 'row', alignItems: 'flex-start', gap: Espaco.md },
   meio: { flex: 1 },
   linhaNome: { flexDirection: 'row', alignItems: 'center', gap: Espaco.xs },
+  pillAbaixo: { flexDirection: 'row', alignItems: 'center', gap: Espaco.xs, marginTop: 3 },
   nome: { fontSize: 16, fontWeight: '700', color: Honra.tinta, flexShrink: 1 },
   selo: { color: Honra.verde, fontWeight: '800' },
   dispDotInline: { width: 8, height: 8, borderRadius: Raio.pill, backgroundColor: Honra.verdeVivo },
@@ -2913,6 +3077,16 @@ const styles = StyleSheet.create({
   // Na Secretária a barra já vive dentro da coluna de resultados: cola-se às
   // margens dessa coluna, não às do ecrã (senão passava por baixo da bancada).
   barraLarga: { left: 0, right: 0 },
+  // No telemóvel a barra deixa de ser uma linha e passa a ser um bloco: as
+  // duas alturas empilham-se, e o `row` que estava na `barra` mudou-se para
+  // as linhas de dentro.
+  barraEstreita: { flexDirection: 'column', alignItems: 'stretch', gap: Espaco.sm },
+  barraLinha: { flexDirection: 'row', alignItems: 'center', gap: Espaco.md },
+  // Os dois botões repartem a largura toda — e o de PEDIR fica com mais, que
+  // é o ato público; guardar na lista é curadoria privada e fala mais baixo.
+  barraBotoes: { gap: Espaco.sm },
+  barraBotaoEstica: { flex: 1, alignItems: 'center', paddingHorizontal: Espaco.sm },
+  barraBotaoAcaoEstica: { flex: 1.3, alignItems: 'center', paddingHorizontal: Espaco.sm },
   // O número em dourado: é prestígio contido — diz quantos, sem gritar.
   barraNum: {
     minWidth: 26,
@@ -2938,6 +3112,23 @@ const styles = StyleSheet.create({
   },
   barraAcaoTxt: { ...TextoAcao, color: Honra.verde, fontSize: 13.5, fontWeight: '700' },
   barraAcaoInativa: { opacity: 0.6 },
+  pedidoDica: { color: Honra.tintaSuave, fontSize: 12.5, marginTop: Espaco.xs },
+  recadoOk: {
+    position: 'absolute',
+    left: Espaco.md,
+    right: Espaco.md,
+    bottom: Espaco.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Espaco.sm,
+    paddingVertical: Espaco.sm + 2,
+    paddingHorizontal: Espaco.md,
+    borderRadius: Raio.md,
+    backgroundColor: Honra.verdeSuave,
+    borderWidth: 1,
+    borderColor: Honra.verde,
+  },
+  recadoOkTxt: { color: Honra.verde, fontSize: 13.5, fontWeight: '700', flex: 1 },
 
   // A minha cara no pedido — vejo exatamente o que a outra pessoa vai ver.
   euLinha: {

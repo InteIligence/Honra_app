@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -394,24 +393,31 @@ export default function Convites() {
         </ScrollView>
       )}
 
-      {/* CRIAR convite é fluxo PRESENCIAL + telemóvel (QR do Honra Card, OTP por
-          SMS): no browser mostra-se só a lista (aceder=sim), e a criação
-          remete-se para o telemóvel. Na app nativa, o FAB de "compor". */}
-      {Platform.OS === 'web' ? (
-        <View style={styles.notaTelemovel}>
-          <Feather name="smartphone" size={16} color={Honra.tintaSuave} />
-          <Text style={styles.notaTelemovelTxt}>{t('convites.criar_telemovel')}</Text>
-        </View>
-      ) : (
-        <Pressable
-          onPress={() => router.push('/convidar-cliente' as Href)}
-          style={styles.fab}
-          accessibilityRole="button"
-          accessibilityLabel={t('convites.criar')}
-        >
-          <Feather name="user-plus" size={24} color={Honra.creme} />
-        </Pressable>
-      )}
+      {/* CRIAR CONVITE, EM QUALQUER LADO.
+          Isto escondia o botão na web e remetia para o telemóvel, por se ter
+          assumido que convidar é um gesto presencial de bolso. Duas coisas
+          desmentiram-no:
+
+          1. O ecrã de criar convite desenha o QR SÓ NA WEB — a biblioteca usa
+             canvas do browser. Ou seja, a porta estava fechada exatamente do
+             lado onde o quarto funciona, e aberta do lado onde o QR nem
+             aparece. Quem seguisse a nota chegava a um ecrã pior.
+
+          2. Nada no fluxo exige um telemóvel a quem CONVIDA. O QR mostra-se
+             num ecrã qualquer — e num monitor lê-se melhor do que num
+             telemóvel. O SMS do código vai para o telefone de quem RECEBE,
+             que é outra pessoa e outro aparelho.
+
+          O Honra na web é o Honra. Uma capacidade central não se tira a metade
+          da casa por um pressuposto sobre onde as pessoas estão. */}
+      <Pressable
+        onPress={() => router.push('/convidar-cliente' as Href)}
+        style={styles.fab}
+        accessibilityRole="button"
+        accessibilityLabel={t('convites.criar')}
+      >
+        <Feather name="user-plus" size={24} color={Honra.creme} />
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -446,15 +452,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   // Web: em vez do FAB de criar, uma nota discreta a remeter para o telemóvel.
-  notaTelemovel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Espaco.sm,
-    paddingVertical: Espaco.md,
-    paddingHorizontal: Espaco.lg,
-  },
-  notaTelemovelTxt: { color: Honra.tintaSuave, fontSize: 13, fontWeight: '600' },
   centro: { padding: Espaco.xl, alignItems: 'center' },
   corpo: { padding: Espaco.md, gap: Espaco.sm, paddingBottom: Espaco.xxl },
   corpoLargo: { width: '100%', maxWidth: 840, alignSelf: 'center', paddingHorizontal: Espaco.xl },

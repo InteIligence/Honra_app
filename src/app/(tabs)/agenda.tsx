@@ -736,11 +736,20 @@ export default function Agenda() {
             <View style={largo ? styles.colDia : undefined}>
               <View style={styles.diaCabeca}>
                 <Text style={styles.diaTitulo}>{rotuloDia}</Text>
-                {/* Uma cor, uma função: em creme é etiqueta ("estás em hoje"),
-                    em verde é AÇÃO (leva-me de volta a hoje). Nunca as duas. */}
+                {/* Uma cor, uma função — MAS A COR NÃO PODE ESTAR SOZINHA.
+                    Estas duas coisas diziam ambas "Hoje", e só a cor as
+                    separava: em creme era a etiqueta ("estás em hoje"), em
+                    verde era a ação ("leva-me a hoje"). Ao abrir o dia 1 de
+                    agosto lia-se "Sábado, 1 de agosto · Hoje" — a app parecia
+                    dizer que o dia 1 era hoje.
+
+                    Numa agenda, dizer o dia errado é o pior erro possível: é
+                    a única coisa que ela tem de acertar. Agora a etiqueta diz
+                    "Hoje" e a ação diz "Ir a hoje" — a cor continua a ajudar,
+                    mas já não é ela a carregar o significado sozinha. */}
                 {diaSel === hoje ? (
                   <View style={styles.hojePill}>
-                    <Text style={styles.hojePillTxt}>{t('agenda.ir_hoje')}</Text>
+                    <Text style={styles.hojePillTxt}>{t('agenda.hoje_etiqueta')}</Text>
                   </View>
                 ) : (
                   <Pressable
@@ -750,6 +759,8 @@ export default function Agenda() {
                       setDiaSel(hojeISO());
                     }}
                     hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('agenda.ir_hoje')}
                   >
                     <Text style={styles.hojeAcao}>{t('agenda.ir_hoje')}</Text>
                   </Pressable>
