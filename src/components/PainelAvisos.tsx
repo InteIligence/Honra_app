@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useT } from '@/i18n';
@@ -34,7 +35,13 @@ const QUANTOS = 6;
 export function PainelAvisos({ visivel, aoFechar }: { visivel: boolean; aoFechar: () => void }) {
   const { t } = useT();
   const { avisos, marcarLida, marcarTodas } = useAvisos();
-  const agora = Date.now();
+  // O relógio lê-se no MOMENTO EM QUE O PAINEL ABRE, pelo `onShow` do Modal.
+  // Não no corpo do componente (`Date.now()` aí é função impura, e dois
+  // renders seguidos davam dois "agoras" — o que aperta o coração num deixava
+  // de apertar no outro), nem num efeito (pôr estado dentro de um efeito faz
+  // cascata de renders). O `onShow` é um EVENTO: acontece uma vez, quando há
+  // mesmo uma razão para ler as horas.
+  const [agora, setAgora] = useState(() => Date.now());
   const mostrados = avisos.slice(0, QUANTOS);
   const naoLidas = avisos.filter((a) => !a.lida).length;
 
@@ -47,7 +54,13 @@ export function PainelAvisos({ visivel, aoFechar }: { visivel: boolean; aoFechar
   }
 
   return (
-    <Modal visible={visivel} transparent animationType="fade" onRequestClose={aoFechar}>
+    <Modal
+      visible={visivel}
+      transparent
+      animationType="fade"
+      onShow={() => setAgora(Date.now())}
+      onRequestClose={aoFechar}
+    >
       {/* O véu fecha ao toque — num painel de passagem, sair tem de ser mais
           fácil do que entrar. */}
       <Pressable style={styles.veu} onPress={aoFechar}>
