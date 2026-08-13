@@ -1243,6 +1243,8 @@ export const pt = {
   'avisos.faltam_min': 'faltam {n} min',
   'avisos.faltam_h': 'faltam {n}h',
   'avisos.faltam_dias': 'faltam {n} dias',
+  'avisos.ver_todos': 'Ver todos os avisos',
+  'avisos.ver_todos_n': 'Ver todos os avisos ({n})',
 
   // ===== EDITAR PERFIL =====
   'eperfil.titulo': 'Editar perfil',

@@ -5,15 +5,27 @@
  * Toca → abre /avisos.
  */
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
+import { PainelAvisos } from '@/components/PainelAvisos';
 import { useAvisos } from '@/lib/avisos';
-import { Honra } from '@/theme/honra';
+import { Honra, LARGURA_SECRETARIA } from '@/theme/honra';
 
 export function Sino({ cor = Honra.tinta }: { cor?: string }) {
   const { naoLidas, pulsar } = useAvisos();
   const anim = useRef(new Animated.Value(0)).current;
+  const { width } = useWindowDimensions();
+  const largo = width >= LARGURA_SECRETARIA;
+  const [painel, setPainel] = useState(false);
 
   // Liga/desliga o anel a pulsar conforme haja urgência.
   useEffect(() => {
@@ -39,7 +51,11 @@ export function Sino({ cor = Honra.tinta }: { cor?: string }) {
 
   return (
     <Pressable
-      onPress={() => router.push('/avisos')}
+      // ECRÃ LARGO: painel por cima, que se lê de relance e fecha ao clicar
+      // fora. TELEMÓVEL: o ecrã inteiro, que lá é o sítio certo — não há "por
+      // cima" num telemóvel, e a página É o destino. A mesma ação, a forma de
+      // cada tamanho.
+      onPress={() => (largo ? setPainel(true) : router.push('/avisos'))}
       hitSlop={10}
       accessibilityRole="button"
       accessibilityLabel={`Avisos${naoLidas ? `, ${naoLidas} por ler` : ''}`}
@@ -71,6 +87,8 @@ export function Sino({ cor = Honra.tinta }: { cor?: string }) {
           <Text style={styles.badgeTxt}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
         </View>
       )}
+
+      {largo ? <PainelAvisos visivel={painel} aoFechar={() => setPainel(false)} /> : null}
     </Pressable>
   );
 }

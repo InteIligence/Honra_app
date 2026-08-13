@@ -41,6 +41,7 @@ import { usePedidosPendentes } from '@/lib/pedidos';
 import { umaPastaPorPar } from '@/lib/projeto';
 import { ESTADOS_HONRADOS, statsContratante } from '@/lib/contratante';
 import { supabase } from '@/lib/supabase';
+import { PainelAvisos } from '@/components/PainelAvisos';
 import { Espaco, Honra, LARGURA_SECRETARIA, Raio } from '@/theme/honra';
 import {
   escalaoDeCredencial,
@@ -359,6 +360,8 @@ export default function Inicio() {
   // SECRETÁRIA: em ecrã largo o mesmo Início abre em grelha de dashboard.
   const { width } = useWindowDimensions();
   const largo = width >= LARGURA_SECRETARIA;
+  /** Painel curto de avisos (só em secretária) — ver PainelAvisos.tsx. */
+  const [painelAvisos, setPainelAvisos] = useState(false);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [verifs, setVerifs] = useState<Verif[]>([]);
   const [numAval, setNumAval] = useState(0);
@@ -1095,7 +1098,9 @@ export default function Inicio() {
             {/* O ponto de avisos (substitui o Sino aqui): adormecido a zeros,
                 halo a pulsar quando há por ler. A contagem lê-se no corpo. */}
             <Pressable
-              onPress={() => router.push('/avisos')}
+              // Em ecrã largo cai o painel curto (o mesmo do Sino); no
+              // telemóvel abre o ecrã de avisos. Ver PainelAvisos.tsx.
+              onPress={() => (largo ? setPainelAvisos(true) : router.push('/avisos'))}
               hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel={
@@ -1852,6 +1857,10 @@ export default function Inicio() {
           </View>
         )}
       </ScrollView>
+      {largo ? (
+        <PainelAvisos visivel={painelAvisos} aoFechar={() => setPainelAvisos(false)} />
+      ) : null}
+
     </SafeAreaView>
   );
 }

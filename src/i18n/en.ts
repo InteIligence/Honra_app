@@ -1225,6 +1225,8 @@ export const en: Record<keyof typeof pt, string> = {
   'avisos.faltam_min': '{n} min left',
   'avisos.faltam_h': '{n}h left',
   'avisos.faltam_dias': '{n} days left',
+  'avisos.ver_todos': 'See all notices',
+  'avisos.ver_todos_n': 'See all notices ({n})',
 
   // ===== EDIT PROFILE =====
   'eperfil.titulo': 'Edit profile',
